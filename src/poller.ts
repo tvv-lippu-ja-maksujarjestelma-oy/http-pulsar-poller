@@ -49,7 +49,6 @@ const keepPollingAndSending = async (
     httpClient = httpClient.extend({ http2: true });
   }
   const pulsarMessageProperties = isUrlInPulsarMessageProperties ? { url } : {};
-  // forEach cannot handle async functions.
   /* eslint-disable no-await-in-loop */
   for (;;) {
     try {
