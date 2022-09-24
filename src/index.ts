@@ -83,6 +83,7 @@ const exitGracefully = async (
     const logger = pino({
       name: "http-pulsar-poller",
       timestamp: pino.stdTimeFunctions.isoTime,
+      sync: true,
     });
 
     let setHealthOk: (isOk: boolean) => void;
