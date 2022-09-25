@@ -1,10 +1,10 @@
-FROM node:16-bullseye-slim AS base
+FROM node:18-bullseye-slim AS base
 
 ARG PULSAR_VERSION
 # The fingerprint for the GPG key can be found from
 # https://downloads.apache.org/pulsar/KEYS
-# and can be verified by using a search engine to find other usees for it.
-ARG PULSAR_GPG_FINGERPRINT=21D60930CE32C858F903BB2CBC33A6A32F90D558
+# and can be verified by using a search engine to find other uses for it.
+ARG PULSAR_GPG_FINGERPRINT=C6027CC38D525CEAF0256A74772D77990D717CBC
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update \
@@ -69,7 +69,7 @@ RUN wget \
 USER root
 RUN apt-get --assume-yes --quiet --no-install-recommends install \
   ./apache-pulsar-client*.deb \
-  && rm -r \
+  && rm -rf \
   /home/node/pulsar-cpp \
   /usr/lib/libpulsarwithdeps.a \
   /usr/lib/libpulsar.a \
@@ -111,7 +111,7 @@ RUN npm run build
 
 # The base image should be the same as the base image of base. Yet using ARG for
 # the base image irritates hadolint and might break Dependabot.
-FROM node:16-bullseye-slim AS production
+FROM node:18-bullseye-slim AS production
 
 ARG DEBIAN_FRONTEND=noninteractive
 ENV NODE_ENV=production

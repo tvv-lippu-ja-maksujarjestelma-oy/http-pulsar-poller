@@ -72,6 +72,6 @@
     }
   },
   "config": {
-    "pulsarVersion": "2.9.2"
+    "pulsarVersion": "2.10.1"
   }
 }
