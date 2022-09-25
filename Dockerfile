@@ -1,4 +1,4 @@
-FROM node:18-bullseye-slim AS base
+FROM node:16-bullseye-slim AS base
 
 ARG PULSAR_VERSION
 # The fingerprint for the GPG key can be found from
@@ -111,7 +111,7 @@ RUN npm run build
 
 # The base image should be the same as the base image of base. Yet using ARG for
 # the base image irritates hadolint and might break Dependabot.
-FROM node:18-bullseye-slim AS production
+FROM node:16-bullseye-slim AS production
 
 ARG DEBIAN_FRONTEND=noninteractive
 ENV NODE_ENV=production
