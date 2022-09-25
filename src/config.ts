@@ -93,24 +93,31 @@ const getHttpAuth = () => {
   return result;
 };
 
-const getHttpPollerConfig = () => {
+const getHttpPollerConfig = (logger: pino.Logger) => {
+  logger.info("Read HTTP URL");
   const url = getRequired("HTTP_URL");
+  logger.info("Read HTTP authentication");
   const usernameAndPassword = getHttpAuth();
+  logger.info("Read HTTP sleep duration");
   const sleepDurationInSeconds = parseFloat(
     getOptional("HTTP_SLEEP_DURATION_IN_SECONDS") ?? "0.1"
   );
+  logger.info("Read HTTP request timeout in seconds");
   const requestTimeoutInSeconds = parseFloat(
     getOptional("HTTP_REQUEST_TIMEOUT_IN_SECONDS") ?? "5"
   );
+  logger.info("Read HTTP is HTTP2");
   const isHttp2Used = getOptionalBooleanWithDefault("HTTP_IS_HTTP2_USED", true);
   // The environment variable has been named weirdly because for someone who
   // does not read the code, the variable is probably more associated with the
   // Pulsar client than the HTTP client. Yet in the code we use this variable
   // only after creating the Pulsar client and producer.
+  logger.info("Read HTTP is URL in message");
   const isUrlInPulsarMessageProperties = getOptionalBooleanWithDefault(
     "PULSAR_IS_URL_IN_MESSAGE_PROPERTIES",
     false
   );
+  logger.info("Read HTTP warning threshold");
   const warningThresholdInSeconds = getOptionalFloat(
     "HTTP_WARNING_THRESHOLD_IN_SECONDS"
   );
@@ -214,7 +221,7 @@ const getHealthCheckConfig = () => {
 };
 
 export const getConfig = (logger: pino.Logger): Config => ({
-  httpPoller: getHttpPollerConfig(),
+  httpPoller: getHttpPollerConfig(logger),
   pulsar: getPulsarConfig(logger),
   healthCheck: getHealthCheckConfig(),
 });
