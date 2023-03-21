@@ -7,8 +7,12 @@ name: "CI/CD: Continuous integration and continuous deployment"
       - main
     tags:
       - "v*"
+    paths-ignore:
+      - "*.md"
   pull_request:
-
+    paths-ignore:
+      - "*.md"
+      
 env:
   IMAGE_NAME: "tvvlmj/${{ github.event.repository.name }}"
   TEST_STAGE: tester
