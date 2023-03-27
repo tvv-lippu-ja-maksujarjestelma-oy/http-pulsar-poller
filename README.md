@@ -6,7 +6,7 @@ http-pulsar-poller uses a cache and only sends those HTTP responses to Pulsar th
 
 ## Development
 
-1. Install [the build dependencies for the Apache Pulsar C++ client](https://pulsar.apache.org/docs/en/client-libraries-cpp/#system-requirements). See below for additional details for Mac OS X
+1. Install [the build dependencies for the Apache Pulsar C++ client](https://pulsar.apache.org/docs/en/client-libraries-cpp/#system-requirements).
 1. Create a suitable `.env` file for configuration.
    Check below for the configuration reference.
 1. Create any necessary secrets that the `.env` file points to.
@@ -36,19 +36,6 @@ http-pulsar-poller uses a cache and only sends those HTTP responses to Pulsar th
    npm start
    ```
 
-### Mac OS build 
-
-For Mac OS to work you need to do some tweaks.
-1. brew install libpulsar
-2. brew info libpulsar shows the directory where libpulsar is installed
-3. Add following exports 
-```
-export PULSAR_CPP_DIR=/opt/homebrew/Cellar/libpulsar/3.1.2 
-export CPLUS_INCLUDE_PATH="$CPLUS_INCLUDE_PATH:$(brew --prefix)/include"
-export LIBRARY_PATH="$LIBRARY_PATH:$(brew --prefix)/lib"      
-```
-4. npm install 
-
 ## Configuration
 
 | Environment variable                  | Required? | Default value | Description                                                                                                                                                                                                             |
@@ -70,4 +57,3 @@ export LIBRARY_PATH="$LIBRARY_PATH:$(brew --prefix)/lib"
 | `PULSAR_SERVICE_URL`                  | ✅ Yes    |               | The service URL of the Apache Pulsar cluster.                                                                                                                                                                           |
 | `PULSAR_TLS_VALIDATE_HOSTNAME`        | ❌ No     | `true`        | Whether to validate the hostname of the Apache Pulsar cluster based on its TLS certificate. This option exists because some Apache Pulsar hosting providers cannot handle Apache Pulsar clients setting this to `true`. |
 | `PULSAR_TOPIC`                        | ✅ Yes    |               | The Apache Pulsar topic to send the HTTP bodies to.                                                                                                                                                                     |
-
