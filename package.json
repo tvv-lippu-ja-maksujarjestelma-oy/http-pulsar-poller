@@ -70,8 +70,5 @@
         }
       ]
     }
-  },
-  "config": {
-    "pulsarVersion": "2.10.1"
   }
 }
