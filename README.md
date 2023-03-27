@@ -6,7 +6,6 @@ http-pulsar-poller uses a cache and only sends those HTTP responses to Pulsar th
 
 ## Development
 
-1. Install [the build dependencies for the Apache Pulsar C++ client](https://pulsar.apache.org/docs/en/client-libraries-cpp/#system-requirements).
 1. Create a suitable `.env` file for configuration.
    Check below for the configuration reference.
 1. Create any necessary secrets that the `.env` file points to.
