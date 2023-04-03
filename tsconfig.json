@@ -1,10 +1,6 @@
 {
-  "extends": "@tsconfig/strictest/tsconfig.json",
+  "extends": "@tsconfig/node-lts-strictest-esm/tsconfig.json",
   "compilerOptions": {
-    "lib": ["es2021"],
-    "module": "es2022",
-    "target": "es2021",
-    "moduleResolution": "node",
     "outDir": "dist"
   }
 }
