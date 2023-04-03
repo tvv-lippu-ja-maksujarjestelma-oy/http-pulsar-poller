@@ -80,11 +80,13 @@ const exitGracefully = async (
 (async () => {
   /* eslint-enable @typescript-eslint/no-floating-promises */
   try {
-    const logger = pino({
-      name: "http-pulsar-poller",
-      timestamp: pino.stdTimeFunctions.isoTime,
-      sync: true,
-    });
+    const logger = pino(
+      {
+        name: "http-pulsar-poller",
+        timestamp: pino.stdTimeFunctions.isoTime,
+      },
+      pino.destination({ sync: true })
+    );
 
     let setHealthOk: (isOk: boolean) => void;
     let closeHealthCheckServer: () => Promise<void>;
