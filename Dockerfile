@@ -60,6 +60,11 @@ WORKDIR /home/node/app
 COPY \
   --chown=node:node \
   --from=builder \
+  /home/node/app/package.json \
+  ./package.json
+COPY \
+  --chown=node:node \
+  --from=builder \
   /home/node/app/dist \
   ./dist
 COPY \
