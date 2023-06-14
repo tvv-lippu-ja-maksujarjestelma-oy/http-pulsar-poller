@@ -78,8 +78,8 @@ const exitGracefully = async (
  */
 /* eslint-disable @typescript-eslint/no-floating-promises */
 (async () => {
-  const serviceName = "http-pulsar-poller";
   /* eslint-enable @typescript-eslint/no-floating-promises */
+  const serviceName = "http-pulsar-poller";
   try {
     const logger = pino(
       {
