@@ -85,12 +85,8 @@ const exitGracefully = async (
       {
         name: serviceName,
         timestamp: pino.stdTimeFunctions.isoTime,
-        redact: {
-          paths: ["pid"],
-          remove: true,
-        },
+        redact: { paths: ["pid"], remove: true },
       },
-
       pino.destination({ sync: true })
     );
 
