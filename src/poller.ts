@@ -67,8 +67,7 @@ const keepPollingAndSending = async (
       https: new https.Agent({ keepAlive: true }),
     },
     headers: {
-      // FIXME: Switch to name and version from package.json.
-      "user-agent": "waltti-apc/dev",
+      "user-agent": "waltti-apc-http-pulsar-poller",
     },
   });
   if (username && password) {
