@@ -20,11 +20,40 @@ const keepPollingAndSending = async (
     isHttp2Used,
     isUrlInPulsarMessageProperties,
     warningThresholdInSeconds,
+    logIntervalInSeconds,
   }: HttpPollerConfig
 ) => {
   // There is only one URL so the cache will not grow beyond size of 1.
   // Therefore we can use a simple Map.
   const cache = new Map();
+  logger.info(
+    {
+      sleepDurationInSeconds,
+      requestTimeoutInSeconds,
+      warningThresholdInSeconds,
+      logIntervalInSeconds,
+    },
+    "Print some configuration values to ease monitoring"
+  );
+  let nRecentPulsarMessages = 0;
+
+  setInterval(() => {
+    logger.info({ nRecentPulsarMessages }, "messages forwarded to Pulsar");
+    nRecentPulsarMessages = 0;
+  }, logIntervalInSeconds * 1e3);
+
+  const send = async (message: Pulsar.ProducerMessage) => {
+    try {
+      await pulsarProducer.send(message);
+      nRecentPulsarMessages += 1;
+    } catch (err) {
+      logger.error(
+        { err, message: JSON.stringify(message) },
+        "Sending to Pulsar failed"
+      );
+    }
+  };
+
   let httpClient = got.extend({
     retry: { limit: 0 },
     timeout: { request: requestTimeoutInSeconds * 1e3 },
@@ -69,22 +98,30 @@ const keepPollingAndSending = async (
           );
         }
         const buffer = response.rawBody;
-        try {
-          // Let Pulsar send messages in the background instead of acking each
-          // message individually.
-          // eslint-disable-next-line @typescript-eslint/no-floating-promises
-          pulsarProducer.send({
-            data: buffer,
-            properties: pulsarMessageProperties,
-            eventTimestamp: Date.now(),
-          });
-        } catch (err) {
-          logger.error({ err }, "Sending to Pulsar failed");
+        if (!response.ok) {
+          logger.warn(
+            { response: JSON.stringify(response) },
+            "HTTP response was not OK. Sending to Pulsar anyway."
+          );
         }
+        const producerMessage = {
+          data: buffer,
+          properties: {
+            ...pulsarMessageProperties,
+            ...{ statusCode: response.statusCode.toString() },
+          },
+          eventTimestamp: Date.now(),
+        };
+        // Send Pulsar messages in the background instead of blocking until the
+        // Pulsar cluster has acked.
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        send(producerMessage);
       }
     } catch (err) {
       logger.error({ err }, "HTTP request failed");
     }
+    // For utmost simplicity, we do not send parallel HTTP requests. Instead we
+    // sleep. The downside is that the rate of requests is more unpredictable.
     await sleep(sleepDurationInSeconds * 1e3);
   }
   /* eslint-enable no-await-in-loop */
