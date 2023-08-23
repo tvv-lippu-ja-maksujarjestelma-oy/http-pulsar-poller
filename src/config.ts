@@ -11,6 +11,7 @@ export interface HttpPollerConfig {
   isHttp2Used: boolean;
   isUrlInPulsarMessageProperties: boolean;
   warningThresholdInSeconds: number | undefined;
+  logIntervalInSeconds: number;
 }
 
 export interface PulsarOauth2Config {
@@ -70,6 +71,18 @@ const getOptionalFloat = (envVariable: string): number | undefined => {
   return string !== undefined ? parseFloat(string) : undefined;
 };
 
+const getOptionalNonNegativeFloat = (
+  envVariable: string
+): number | undefined => {
+  const float = getOptionalFloat(envVariable);
+  if (float != null && (!Number.isFinite(float) || float < 0)) {
+    throw new Error(
+      `${envVariable} must be a non-negative, finite float if given. Instead, ${float} was given.`
+    );
+  }
+  return float;
+};
+
 const getHttpAuth = () => {
   let result;
   const usernameKey = "HTTP_USERNAME_PATH";
@@ -96,12 +109,10 @@ const getHttpAuth = () => {
 const getHttpPollerConfig = () => {
   const url = getRequired("HTTP_URL");
   const usernameAndPassword = getHttpAuth();
-  const sleepDurationInSeconds = parseFloat(
-    getOptional("HTTP_SLEEP_DURATION_IN_SECONDS") ?? "0.1"
-  );
-  const requestTimeoutInSeconds = parseFloat(
-    getOptional("HTTP_REQUEST_TIMEOUT_IN_SECONDS") ?? "5"
-  );
+  const sleepDurationInSeconds =
+    getOptionalNonNegativeFloat("HTTP_SLEEP_DURATION_IN_SECONDS") ?? 0.1;
+  const requestTimeoutInSeconds =
+    getOptionalNonNegativeFloat("HTTP_REQUEST_TIMEOUT_IN_SECONDS") ?? 5;
   const isHttp2Used = getOptionalBooleanWithDefault("HTTP_IS_HTTP2_USED", true);
   // The environment variable has been named weirdly because for someone who
   // does not read the code, the variable is probably more associated with the
@@ -111,9 +122,11 @@ const getHttpPollerConfig = () => {
     "PULSAR_IS_URL_IN_MESSAGE_PROPERTIES",
     false
   );
-  const warningThresholdInSeconds = getOptionalFloat(
+  const warningThresholdInSeconds = getOptionalNonNegativeFloat(
     "HTTP_WARNING_THRESHOLD_IN_SECONDS"
   );
+  const logIntervalInSeconds =
+    getOptionalNonNegativeFloat("LOG_INTERVAL_IN_SECONDS") ?? 60;
   return {
     url,
     ...usernameAndPassword,
@@ -122,6 +135,7 @@ const getHttpPollerConfig = () => {
     isHttp2Used,
     isUrlInPulsarMessageProperties,
     warningThresholdInSeconds,
+    logIntervalInSeconds,
   };
 };
 
