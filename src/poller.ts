@@ -21,6 +21,7 @@ const keepPollingAndSending = async (
     isUrlInPulsarMessageProperties,
     warningThresholdInSeconds,
     logIntervalInSeconds,
+    userAgent,
   }: HttpPollerConfig
 ) => {
   // There is only one URL so the cache will not grow beyond size of 1.
@@ -67,7 +68,7 @@ const keepPollingAndSending = async (
       https: new https.Agent({ keepAlive: true }),
     },
     headers: {
-      "user-agent": "waltti-apc-http-pulsar-poller",
+      "user-agent": userAgent,
     },
   });
   if (username && password) {

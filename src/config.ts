@@ -12,6 +12,7 @@ export interface HttpPollerConfig {
   isUrlInPulsarMessageProperties: boolean;
   warningThresholdInSeconds: number | undefined;
   logIntervalInSeconds: number;
+  userAgent: string;
 }
 
 export interface PulsarOauth2Config {
@@ -127,6 +128,7 @@ const getHttpPollerConfig = () => {
   );
   const logIntervalInSeconds =
     getOptionalNonNegativeFloat("LOG_INTERVAL_IN_SECONDS") ?? 60;
+  const userAgent = process.env["HTTP_USER_AGENT"] ?? "http-pulsar-poller";
   return {
     url,
     ...usernameAndPassword,
@@ -136,6 +138,7 @@ const getHttpPollerConfig = () => {
     isUrlInPulsarMessageProperties,
     warningThresholdInSeconds,
     logIntervalInSeconds,
+    userAgent,
   };
 };
 
