@@ -1,10 +1,10 @@
 import pino from "pino";
 import type Pulsar from "pulsar-client";
-import { getConfig } from "./config.js";
-import keepPollingAndSending from "./poller.js";
-import createHealthCheckServer from "./healthCheck.js";
-import { createPulsarClient, createPulsarProducer } from "./pulsar.js";
-import transformUnknownToError from "./util.js";
+import { getConfig } from "./config";
+import keepPollingAndSending from "./poller";
+import createHealthCheckServer from "./healthCheck";
+import { createPulsarClient, createPulsarProducer } from "./pulsar";
+import transformUnknownToError from "./util";
 
 /**
  * Exit gracefully.

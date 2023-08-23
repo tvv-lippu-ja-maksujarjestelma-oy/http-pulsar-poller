@@ -2,8 +2,7 @@
   "name": "http-pulsar-poller",
   "version": "0.0.1",
   "description": "Poll an HTTP endpoint and push the data into Apache Pulsar",
-  "type": "module",
-  "exports": "dist/index.js",
+  "main": "dist/index.js",
   "scripts": {
     "build": "rm -rf dist && tsc",
     "check-and-build": "npm run ts:check && npm run prettier:check && npm run eslint && npm run test && npm run build",
@@ -29,7 +28,7 @@
   },
   "homepage": "https://github.com/tvv-lippu-ja-maksujarjestelma-oy/http-pulsar-poller#readme",
   "devDependencies": {
-    "@tsconfig/node-lts-strictest-esm": "^18.12.1",
+    "@tsconfig/strictest": "^2.0.1",
     "@types/jest": "^29.5.3",
     "@types/node": "^20.5.1",
     "@typescript-eslint/eslint-plugin": "^6.4.0",
@@ -53,21 +52,10 @@
     "pulsar-client": "^1.9.0"
   },
   "jest": {
-    "preset": "ts-jest/presets/default-esm",
+    "preset": "ts-jest/presets/js-with-ts",
     "testEnvironment": "node",
     "testPathIgnorePatterns": [
       "./dist"
-    ],
-    "moduleNameMapper": {
-      "^(\\.{1,2}/.*)\\.js$": "$1"
-    },
-    "transform": {
-      "<regex_match_files>": [
-        "ts-jest",
-        {
-          "useESM": true
-        }
-      ]
-    }
+    ]
   }
 }

@@ -4,7 +4,7 @@ import https from "node:https";
 import got from "got";
 import type pino from "pino";
 import type Pulsar from "pulsar-client";
-import type { HttpPollerConfig } from "./config.js";
+import type { HttpPollerConfig } from "./config";
 
 const sleep = util.promisify(setTimeout);
 
