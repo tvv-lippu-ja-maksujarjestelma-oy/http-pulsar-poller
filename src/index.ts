@@ -16,7 +16,7 @@ const exitGracefully = async (
   setHealthOk?: (isOk: boolean) => void,
   closeHealthCheckServer?: () => Promise<void>,
   pulsarClient?: Pulsar.Client,
-  pulsarProducer?: Pulsar.Producer
+  pulsarProducer?: Pulsar.Producer,
 ) => {
   if (exitError) {
     logger.fatal(exitError);
@@ -31,7 +31,7 @@ const exitGracefully = async (
   } catch (err) {
     logger.error(
       { err },
-      "Something went wrong when setting health checks to fail"
+      "Something went wrong when setting health checks to fail",
     );
   }
   try {
@@ -66,7 +66,7 @@ const exitGracefully = async (
   } catch (err) {
     logger.error(
       { err },
-      "Something went wrong when closing health check server"
+      "Something went wrong when closing health check server",
     );
   }
   logger.info("Exit process");
@@ -87,7 +87,7 @@ const exitGracefully = async (
         timestamp: pino.stdTimeFunctions.isoTime,
         redact: { paths: ["pid"], remove: true },
       },
-      pino.destination({ sync: true })
+      pino.destination({ sync: true }),
     );
 
     let setHealthOk: (isOk: boolean) => void;
@@ -105,7 +105,7 @@ const exitGracefully = async (
         setHealthOk,
         closeHealthCheckServer,
         pulsarClient,
-        pulsarProducer
+        pulsarProducer,
       );
       /* eslint-enable @typescript-eslint/no-floating-promises */
     };
@@ -114,7 +114,7 @@ const exitGracefully = async (
       // Handle different kinds of exits.
       process.on("beforeExit", () => exitHandler(1, new Error("beforeExit")));
       process.on("unhandledRejection", (reason) =>
-        exitHandler(1, transformUnknownToError(reason))
+        exitHandler(1, transformUnknownToError(reason)),
       );
       process.on("uncaughtException", (err) => exitHandler(1, err));
       process.on("SIGINT", (signal) => exitHandler(130, new Error(signal)));
@@ -126,7 +126,7 @@ const exitGracefully = async (
       const config = getConfig(logger);
       logger.info("Create health check server");
       ({ closeHealthCheckServer, setHealthOk } = createHealthCheckServer(
-        config.healthCheck
+        config.healthCheck,
       ));
       logger.info("Create Pulsar client");
       pulsarClient = createPulsarClient(config.pulsar);
@@ -135,7 +135,7 @@ const exitGracefully = async (
       logger.info("Set health check status to OK");
       setHealthOk(true);
       logger.info(
-        "Keep polling HTTP endpoint and sending the responses to Pulsar"
+        "Keep polling HTTP endpoint and sending the responses to Pulsar",
       );
       await keepPollingAndSending(logger, pulsarProducer, config.httpPoller);
     } catch (err) {

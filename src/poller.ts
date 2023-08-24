@@ -18,7 +18,7 @@ const keepPollingAndSending = async (
     isUrlInPulsarMessageProperties,
     logIntervalInSeconds,
     userAgent,
-  }: HttpPollerConfig
+  }: HttpPollerConfig,
 ): Promise<void> => {
   logger.info(
     {
@@ -27,7 +27,7 @@ const keepPollingAndSending = async (
       logIntervalInSeconds,
       userAgent,
     },
-    "Print some configuration values to ease monitoring"
+    "Print some configuration values to ease monitoring",
   );
 
   let nRecentPulsarMessages = 0;
@@ -44,7 +44,7 @@ const keepPollingAndSending = async (
     } catch (err) {
       logger.error(
         { err, message: JSON.stringify(message) },
-        "Sending to Pulsar failed"
+        "Sending to Pulsar failed",
       );
     }
   };
@@ -54,7 +54,7 @@ const keepPollingAndSending = async (
   const headersBase: Record<string, string> = { "User-Agent": userAgent };
   if (username && password) {
     headersBase["Authorization"] = `Basic ${Buffer.from(
-      `${username}:${password}`
+      `${username}:${password}`,
     ).toString("base64")}`;
   }
   const pulsarMessagePropertiesBase = isUrlInPulsarMessageProperties
@@ -66,7 +66,7 @@ const keepPollingAndSending = async (
     const controller = new AbortController();
     timeoutId = setTimeout(
       () => controller.abort(),
-      requestTimeoutInSeconds * 1_000
+      requestTimeoutInSeconds * 1_000,
     );
     let response: Response | undefined;
     let arrayBuffer: ArrayBuffer | undefined;
@@ -92,13 +92,13 @@ const keepPollingAndSending = async (
         response.status === 304 || (newETag !== null && newETag === eTag);
       if (isCached) {
         logger.debug(
-          "The response has not changed since previous request. Skip sending to Pulsar."
+          "The response has not changed since previous request. Skip sending to Pulsar.",
         );
       } else {
         if (!response.ok) {
           logger.warn(
             { response: JSON.stringify(response) },
-            "The response was not OK. Sending to Pulsar anyway."
+            "The response was not OK. Sending to Pulsar anyway.",
           );
         }
         const pulsarMessageProperties = {
