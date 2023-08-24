@@ -97,7 +97,12 @@ const keepPollingAndSending = async (
       } else {
         if (!response.ok) {
           logger.warn(
-            { response: JSON.stringify(response) },
+            {
+              responseStatus: response.status,
+              responseStatusText: response.statusText,
+              responseHeaders: Object.fromEntries(response.headers.entries()),
+              responseBodyAsUtf8: new TextDecoder("utf8").decode(arrayBuffer),
+            },
             "The response was not OK. Sending to Pulsar anyway.",
           );
         }
