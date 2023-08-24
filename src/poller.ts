@@ -1,10 +1,8 @@
 import util from "node:util";
-import http from "node:http";
-import https from "node:https";
-import got from "got";
 import type pino from "pino";
 import type Pulsar from "pulsar-client";
 import type { HttpPollerConfig } from "./config";
+import transformUnknownToError from "./util";
 
 const sleep = util.promisify(setTimeout);
 
@@ -17,25 +15,21 @@ const keepPollingAndSending = async (
     password,
     sleepDurationInSeconds,
     requestTimeoutInSeconds,
-    isHttp2Used,
     isUrlInPulsarMessageProperties,
-    warningThresholdInSeconds,
     logIntervalInSeconds,
     userAgent,
   }: HttpPollerConfig
-) => {
-  // There is only one URL so the cache will not grow beyond size of 1.
-  // Therefore we can use a simple Map.
-  const cache = new Map();
+): Promise<void> => {
   logger.info(
     {
       sleepDurationInSeconds,
       requestTimeoutInSeconds,
-      warningThresholdInSeconds,
       logIntervalInSeconds,
+      userAgent,
     },
     "Print some configuration values to ease monitoring"
   );
+
   let nRecentPulsarMessages = 0;
 
   setInterval(() => {
@@ -55,61 +49,65 @@ const keepPollingAndSending = async (
     }
   };
 
-  let httpClient = got.extend({
-    retry: { limit: 0 },
-    timeout: { request: requestTimeoutInSeconds * 1e3 },
-    responseType: "buffer",
-    cache,
-    // With the default value of true, the request header Authorization would
-    // prevent caching by default.
-    cacheOptions: { shared: false },
-    agent: {
-      http: new http.Agent({ keepAlive: true }),
-      https: new https.Agent({ keepAlive: true }),
-    },
-    headers: {
-      "user-agent": userAgent,
-    },
-  });
+  let eTag: string | null = null;
+  let timeoutId: NodeJS.Timeout;
+  const headersBase: Record<string, string> = { "User-Agent": userAgent };
   if (username && password) {
-    httpClient = httpClient.extend({ username, password });
+    headersBase["Authorization"] = `Basic ${Buffer.from(
+      `${username}:${password}`
+    ).toString("base64")}`;
   }
-  if (isHttp2Used) {
-    httpClient = httpClient.extend({ http2: true });
-  }
-  const pulsarMessageProperties = isUrlInPulsarMessageProperties ? { url } : {};
+  const pulsarMessagePropertiesBase = isUrlInPulsarMessageProperties
+    ? { url }
+    : {};
+
   /* eslint-disable no-await-in-loop */
   for (;;) {
+    const controller = new AbortController();
+    timeoutId = setTimeout(
+      () => controller.abort(),
+      requestTimeoutInSeconds * 1_000
+    );
+    let response: Response | undefined;
+    let arrayBuffer: ArrayBuffer | undefined;
     try {
-      const response = await httpClient.get(url);
-      if (!response.isFromCache) {
-        // For some reason timings is only available for responses not from the
-        // cache, even if the server responded to If-None-Match to affirm the
-        // freshness of the cache.
-        if (
-          warningThresholdInSeconds !== undefined &&
-          response.timings.phases.total !== undefined &&
-          response.timings.phases.total > warningThresholdInSeconds * 1e3
-        ) {
-          logger.warn(
-            { timings: response.timings },
-            `The HTTP request took over ${warningThresholdInSeconds} seconds ` +
-              "to finish"
-          );
-        }
-        const buffer = response.rawBody;
+      response = await fetch(url, {
+        signal: controller.signal,
+        headers: { ...headersBase, ...(eTag ? { "If-None-Match": eTag } : {}) },
+      });
+      arrayBuffer = await response.arrayBuffer();
+    } catch (error) {
+      const err = transformUnknownToError(error);
+      if (err.name === "AbortError") {
+        logger.debug({ err }, "Request took too long so it was aborted.");
+      } else {
+        logger.warn({ err }, "Request failed.");
+      }
+    } finally {
+      clearTimeout(timeoutId);
+    }
+    if (response != null && arrayBuffer != null) {
+      const newETag = response.headers.get("ETag");
+      const isCached =
+        response.status === 304 || (newETag !== null && newETag === eTag);
+      if (isCached) {
+        logger.debug(
+          "The response has not changed since previous request. Skip sending to Pulsar."
+        );
+      } else {
         if (!response.ok) {
           logger.warn(
             { response: JSON.stringify(response) },
-            "HTTP response was not OK. Sending to Pulsar anyway."
+            "The response was not OK. Sending to Pulsar anyway."
           );
         }
+        const pulsarMessageProperties = {
+          ...pulsarMessagePropertiesBase,
+          ...{ statusCode: response.status.toString() },
+        };
         const producerMessage = {
-          data: buffer,
-          properties: {
-            ...pulsarMessageProperties,
-            ...{ statusCode: response.statusCode.toString() },
-          },
+          data: Buffer.from(arrayBuffer),
+          properties: pulsarMessageProperties,
           eventTimestamp: Date.now(),
         };
         // Send Pulsar messages in the background instead of blocking until the
@@ -117,8 +115,7 @@ const keepPollingAndSending = async (
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         send(producerMessage);
       }
-    } catch (err) {
-      logger.error({ err }, "HTTP request failed");
+      eTag = response.headers.get("ETag");
     }
     // For utmost simplicity, we do not send parallel HTTP requests. Instead we
     // sleep. The downside is that the rate of requests is more unpredictable.
