@@ -1,5 +1,5 @@
 import Pulsar from "pulsar-client";
-import type { PulsarConfig } from "./config.js";
+import type { PulsarConfig } from "./config";
 
 export const createPulsarClient = ({
   oauth2Config,
