@@ -1,6 +1,6 @@
 import http from "node:http";
 import util from "node:util";
-import type { HealthCheckConfig } from "./config.js";
+import type { HealthCheckConfig } from "./config";
 
 const createHealthCheckServer = ({ port }: HealthCheckConfig) => {
   let isHealthOk = false;
