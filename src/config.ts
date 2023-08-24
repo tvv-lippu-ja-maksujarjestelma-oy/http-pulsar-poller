@@ -8,9 +8,7 @@ export interface HttpPollerConfig {
   password?: string;
   sleepDurationInSeconds: number;
   requestTimeoutInSeconds: number;
-  isHttp2Used: boolean;
   isUrlInPulsarMessageProperties: boolean;
-  warningThresholdInSeconds: number | undefined;
   logIntervalInSeconds: number;
   userAgent: string;
 }
@@ -114,7 +112,6 @@ const getHttpPollerConfig = () => {
     getOptionalNonNegativeFloat("HTTP_SLEEP_DURATION_IN_SECONDS") ?? 0.1;
   const requestTimeoutInSeconds =
     getOptionalNonNegativeFloat("HTTP_REQUEST_TIMEOUT_IN_SECONDS") ?? 5;
-  const isHttp2Used = getOptionalBooleanWithDefault("HTTP_IS_HTTP2_USED", true);
   // The environment variable has been named weirdly because for someone who
   // does not read the code, the variable is probably more associated with the
   // Pulsar client than the HTTP client. Yet in the code we use this variable
@@ -122,9 +119,6 @@ const getHttpPollerConfig = () => {
   const isUrlInPulsarMessageProperties = getOptionalBooleanWithDefault(
     "PULSAR_IS_URL_IN_MESSAGE_PROPERTIES",
     false
-  );
-  const warningThresholdInSeconds = getOptionalNonNegativeFloat(
-    "HTTP_WARNING_THRESHOLD_IN_SECONDS"
   );
   const logIntervalInSeconds =
     getOptionalNonNegativeFloat("LOG_INTERVAL_IN_SECONDS") ?? 60;
@@ -134,9 +128,7 @@ const getHttpPollerConfig = () => {
     ...usernameAndPassword,
     sleepDurationInSeconds,
     requestTimeoutInSeconds,
-    isHttp2Used,
     isUrlInPulsarMessageProperties,
-    warningThresholdInSeconds,
     logIntervalInSeconds,
     userAgent,
   };
