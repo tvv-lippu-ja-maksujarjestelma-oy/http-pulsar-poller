@@ -113,7 +113,7 @@ const keepPollingAndSending = async (
         const producerMessage = {
           data: Buffer.from(arrayBuffer),
           properties: pulsarMessageProperties,
-          eventTimestamp: Date.now() / 1e3,
+          eventTimestamp: Date.now(),
         };
         // Send Pulsar messages in the background instead of blocking until the
         // Pulsar cluster has acked.
