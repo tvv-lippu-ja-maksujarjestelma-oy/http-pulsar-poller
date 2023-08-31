@@ -33,7 +33,7 @@ const keepPollingAndSending = async (
   let nRecentPulsarMessages = 0;
 
   setInterval(() => {
-    logger.info({ nRecentPulsarMessages }, "messages forwarded to Pulsar");
+    logger.info({ nRecentPulsarMessages }, "Forwarded messages to Pulsar");
     nRecentPulsarMessages = 0;
   }, logIntervalInSeconds * 1e3);
 
