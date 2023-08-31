@@ -1,4 +1,4 @@
-import pino from "pino";
+import type pino from "pino";
 import type Pulsar from "pulsar-client";
 import { getConfig } from "./config";
 import keepPollingAndSending from "./poller";
