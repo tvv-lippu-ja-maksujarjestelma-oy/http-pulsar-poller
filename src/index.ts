@@ -5,15 +5,7 @@ import keepPollingAndSending from "./poller";
 import createHealthCheckServer from "./healthCheck";
 import { createPulsarClient, createPulsarProducer } from "./pulsar";
 import transformUnknownToError from "./util";
-
-const PinoLevelToSeverityLookup = {
-  trace: "DEBUG",
-  debug: "DEBUG",
-  info: "INFO",
-  warn: "WARNING",
-  error: "ERROR",
-  fatal: "CRITICAL",
-};
+import { createLogger } from "./gcpLogging";
 
 /**
  * Exit gracefully.
@@ -90,27 +82,7 @@ const exitGracefully = async (
   /* eslint-enable @typescript-eslint/no-floating-promises */
   const serviceName = "http-pulsar-poller";
   try {
-    const logger = pino(
-      {
-        name: serviceName,
-        timestamp: pino.stdTimeFunctions.isoTime,
-        redact: { paths: ["pid"], remove: true },
-        messageKey: "message",
-        formatters: {
-          messageKey: "message",
-          level(label: string, number: number) {
-            return {
-              severity:
-                // @ts-ignore FIXME
-                PinoLevelToSeverityLookup[label] ||
-                PinoLevelToSeverityLookup["info"],
-              level: number,
-            };
-          },
-        },
-      },
-      pino.destination({ sync: true }),
-    );
+    const logger = createLogger({ name: serviceName });
 
     let setHealthOk: (isOk: boolean) => void;
     let closeHealthCheckServer: () => Promise<void>;
