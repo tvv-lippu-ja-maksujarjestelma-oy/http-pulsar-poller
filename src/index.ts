@@ -6,6 +6,15 @@ import createHealthCheckServer from "./healthCheck";
 import { createPulsarClient, createPulsarProducer } from "./pulsar";
 import transformUnknownToError from "./util";
 
+const PinoLevelToSeverityLookup = {
+  trace: "DEBUG",
+  debug: "DEBUG",
+  info: "INFO",
+  warn: "WARNING",
+  error: "ERROR",
+  fatal: "CRITICAL",
+};
+
 /**
  * Exit gracefully.
  */
@@ -86,6 +95,19 @@ const exitGracefully = async (
         name: serviceName,
         timestamp: pino.stdTimeFunctions.isoTime,
         redact: { paths: ["pid"], remove: true },
+        messageKey: "message",
+        formatters: {
+          messageKey: "message",
+          level(label: string, number: number) {
+            return {
+              severity:
+                // @ts-ignore FIXME
+                PinoLevelToSeverityLookup[label] ||
+                PinoLevelToSeverityLookup["info"],
+              level: number,
+            };
+          },
+        },
       },
       pino.destination({ sync: true }),
     );
