@@ -24,6 +24,7 @@ const keepPollingAndSending = async (
     {
       sleepDurationInSeconds,
       requestTimeoutInSeconds,
+      isUrlInPulsarMessageProperties,
       logIntervalInSeconds,
       userAgent,
     },
