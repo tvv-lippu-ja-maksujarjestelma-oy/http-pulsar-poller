@@ -5,6 +5,7 @@ import keepPollingAndSending from "./poller";
 import createHealthCheckServer from "./healthCheck";
 import { createPulsarClient, createPulsarProducer } from "./pulsar";
 import transformUnknownToError from "./util";
+import { createLogger } from "./gcpLogging";
 
 /**
  * Exit gracefully.
@@ -81,14 +82,7 @@ const exitGracefully = async (
   /* eslint-enable @typescript-eslint/no-floating-promises */
   const serviceName = "http-pulsar-poller";
   try {
-    const logger = pino(
-      {
-        name: serviceName,
-        timestamp: pino.stdTimeFunctions.isoTime,
-        redact: { paths: ["pid"], remove: true },
-      },
-      pino.destination({ sync: true }),
-    );
+    const logger = createLogger({ name: serviceName });
 
     let setHealthOk: (isOk: boolean) => void;
     let closeHealthCheckServer: () => Promise<void>;
