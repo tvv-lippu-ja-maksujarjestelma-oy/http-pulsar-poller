@@ -48,7 +48,7 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "pino": "^8.16.2",
+    "pino": "^9.1.0",
     "pulsar-client": "^1.11.0",
     "undici": "^5.28.4"
   },
