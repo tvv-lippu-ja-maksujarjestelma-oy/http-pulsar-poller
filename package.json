@@ -50,7 +50,7 @@
   "dependencies": {
     "pino": "^8.16.2",
     "pulsar-client": "^1.13.1",
-    "undici": "^5.28.4"
+    "undici": "^7.6.0"
   },
   "jest": {
     "preset": "ts-jest/presets/js-with-ts",
