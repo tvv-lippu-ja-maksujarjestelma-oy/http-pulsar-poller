@@ -25,7 +25,7 @@ export interface PulsarOauth2Config {
 }
 
 export interface PulsarConfig {
-  oauth2Config: PulsarOauth2Config;
+  oauth2Config?: PulsarOauth2Config;
   clientConfig: Pulsar.ClientConfig;
   producerConfig: Pulsar.ProducerConfig;
 }
@@ -134,13 +134,35 @@ const getHttpPollerConfig = () => {
   };
 };
 
-const getPulsarOauth2Config = () => ({
-  // pulsar-client requires "type" but that seems unnecessary
-  type: "client_credentials",
-  issuer_url: getRequired("PULSAR_OAUTH2_ISSUER_URL"),
-  private_key: getRequired("PULSAR_OAUTH2_KEY_PATH"),
-  audience: getRequired("PULSAR_OAUTH2_AUDIENCE"),
-});
+const getPulsarOauth2Config = (): PulsarOauth2Config | undefined => {
+  const issuerUrl = getOptional("PULSAR_OAUTH2_ISSUER_URL");
+  const privateKey = getOptional("PULSAR_OAUTH2_KEY_PATH");
+  const audience = getOptional("PULSAR_OAUTH2_AUDIENCE");
+
+  // If none of the required OAuth2 vars are provided, assume auth disabled
+  const anyProvided =
+    issuerUrl !== undefined ||
+    privateKey !== undefined ||
+    audience !== undefined;
+  if (!anyProvided) {
+    return undefined;
+  }
+
+  // If any is provided, require all required ones
+  if (!issuerUrl || !privateKey || !audience) {
+    throw new Error(
+      "If any of PULSAR_OAUTH2_ISSUER_URL, PULSAR_OAUTH2_KEY_PATH, PULSAR_OAUTH2_AUDIENCE is defined, all must be defined.",
+    );
+  }
+
+  return {
+    // pulsar-client requires "type" but that seems unnecessary
+    type: "client_credentials",
+    issuer_url: issuerUrl,
+    private_key: privateKey,
+    audience,
+  };
+};
 
 const createPulsarLog =
   (logger: pino.Logger) =>
@@ -202,8 +224,7 @@ const getPulsarConfig = (logger: pino.Logger): PulsarConfig => {
     true,
   );
   const compressionType = getPulsarCompressionType();
-  return {
-    oauth2Config,
+  const base = {
     clientConfig: {
       serviceUrl,
       tlsValidateHostname,
@@ -214,7 +235,12 @@ const getPulsarConfig = (logger: pino.Logger): PulsarConfig => {
       blockIfQueueFull,
       compressionType,
     },
-  };
+  } as const;
+
+  // Only include oauth2Config when defined to satisfy exactOptionalPropertyTypes
+  const result = oauth2Config ? { ...base, oauth2Config } : base;
+
+  return result;
 };
 
 const getHealthCheckConfig = () => {
