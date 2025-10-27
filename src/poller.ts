@@ -1,6 +1,7 @@
 import util from "node:util";
 import type pino from "pino";
 import type Pulsar from "pulsar-client";
+import { fetch, type Response } from "undici";
 import type { HttpPollerConfig } from "./config";
 import transformUnknownToError from "./util";
 
