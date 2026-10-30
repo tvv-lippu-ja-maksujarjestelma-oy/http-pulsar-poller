@@ -63,7 +63,6 @@ const keepPollingAndSending = async (
     ? { url }
     : {};
 
-  /* eslint-disable no-await-in-loop */
   for (;;) {
     const controller = new AbortController();
     timeoutId = setTimeout(
@@ -128,7 +127,6 @@ const keepPollingAndSending = async (
     // sleep. The downside is that the rate of requests is more unpredictable.
     await sleep(sleepDurationInSeconds * 1e3);
   }
-  /* eslint-enable no-await-in-loop */
 };
 
 export default keepPollingAndSending;
