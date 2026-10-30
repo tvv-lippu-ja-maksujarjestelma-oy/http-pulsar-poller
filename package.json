@@ -47,9 +47,9 @@
     "typescript-eslint": "^8.72.1"
   },
   "dependencies": {
-    "pino": "^8.16.2",
+    "pino": "^10.4.0",
     "pulsar-client": "^1.18.0",
-    "undici": "^5.28.4"
+    "undici": "^8.12.3"
   },
   "jest": {
     "preset": "ts-jest/presets/js-with-ts",
