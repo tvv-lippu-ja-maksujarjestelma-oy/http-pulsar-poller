@@ -1,47 +1,43 @@
----
-name: Dependabot auto-merge
+name: Dependency policy
 on:
-  pull_request:
-  merge_group:
-
+  pull_request_target:
+    types:
+      [
+        opened,
+        synchronize,
+        reopened,
+        edited,
+        labeled,
+        unlabeled,
+        ready_for_review,
+        converted_to_draft,
+      ]
+  # Reviews run an unprivileged signal workflow; only default-branch code below
+  # consumes workflow_run. No artifacts or code from the signal are trusted.
+  workflow_run:
+    workflows: [Dependency review signal]
+    types: [completed]
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
 permissions:
-  contents: write
-  pull-requests: write
-
+  checks: read
+  contents: read
+  pull-requests: read
+  statuses: write
+concurrency:
+  group: dependency-policy
+  cancel-in-progress: false
 jobs:
-  dependabot-auto-merge:
+  evaluate:
+    if: ${{ vars.DEPENDENCY_POLICY_ENABLED == 'true' }}
     runs-on: ubuntu-latest
-    if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' }}
     steps:
-      - name: Dependabot metadata
-        id: dependabot-metadata
-        uses: dependabot/fetch-metadata@v3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          github-token: "${{ secrets.GITHUB_TOKEN }}"
-      - name: Approve patch and minor updates
-        if: ${{steps.dependabot-metadata.outputs.update-type == 'version-update:semver-patch' || steps.dependabot-metadata.outputs.update-type == 'version-update:semver-minor'}}
-        run: gh pr review "${PR_URL}" --approve --body "I **approve** this pull request because it includes a **patch or minor update**."
-        env:
-          PR_URL: ${{github.event.pull_request.html_url}}
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-      - name: Approve GitHub Actions updates
-        # CI runs on the updated actions, so a green PR has exercised them.
-        if: ${{steps.dependabot-metadata.outputs.package-ecosystem == 'github_actions'}}
-        run: gh pr review "${PR_URL}" --approve --body "I **approve** this pull request because it only updates **GitHub Actions** used in CI."
-        env:
-          PR_URL: ${{github.event.pull_request.html_url}}
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-      - name: Approve major updates of development dependencies
-        if: ${{steps.dependabot-metadata.outputs.update-type == 'version-update:semver-major' && steps.dependabot-metadata.outputs.dependency-type == 'direct:development'}}
-        run: gh pr review "${PR_URL}" --approve -b "I **approve** this pull request because it includes a **major update of a dependency used only in development**."
-        env:
-          PR_URL: ${{github.event.pull_request.html_url}}
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-      - name: Comment on major updates of non-development dependencies
-        if: ${{steps.dependabot-metadata.outputs.update-type == 'version-update:semver-major' && steps.dependabot-metadata.outputs.dependency-type == 'direct:production' && steps.dependabot-metadata.outputs.package-ecosystem != 'github_actions'}}
-        run: |
-          gh pr comment "${PR_URL}" --body "I **do not approve** this PR because it includes a **major update of a dependency used in production**."
-          gh pr edit "${PR_URL}" --add-label "help wanted"
-        env:
-          PR_URL: ${{github.event.pull_request.html_url}}
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+      - uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        with:
+          script: |
+            await require('./.github/dependency-policy/run.cjs')({github, context, core});
