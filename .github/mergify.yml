@@ -10,6 +10,7 @@ queue_rules:
       - -closed
       - -label~=(?i)^(help wanted|help-wanted|hold)$
       - "#changes-requested-reviews-by=0"
+      - check-success=@github-actions/Dependency policy Dependabot
       - or:
           - check-success=@github-actions/Dependency policy AUTO
           - approved-reviews-by=pnupu

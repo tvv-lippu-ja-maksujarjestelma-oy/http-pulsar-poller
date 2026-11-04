@@ -36,7 +36,7 @@ GitHub Actions and is unsigned; it correctly requires HUMAN.
 
 ## Checks and boundaries
 
-- `node --test .github/dependency-policy/*.cases.cjs`: 55 tests. Includes real
+- `node --test .github/dependency-policy/*.cases.cjs`: 63 tests. Includes real
   grouped/v2 data, sensitive/mixed/transitive changes, stale/missing metadata,
   pnupu/foreign/bot/dismissed approvals, late holds, failed/pending/missing CI,
   activation, foreign publishers, API error revocation and status deduplication.
@@ -66,5 +66,37 @@ per-PR failure isolation, and duplicate status suppression. Conservative
 Mergify-rebased/base-drift fallback is documented. No existing test, assertion,
 timeout, CI/security check or error handling was weakened. Round 2 Codex reported no findings; Claude found one v3 test-helper defect.
 The helper now tolerates v3, with a migration regression test. Status-write cache
-consistency also has a regression test. Round 3 reviews these final corrections. The cumulative budget is five rounds across the full
-change, including later repository variants; it does not reset per repository.
+consistency also has a regression test. Round 3 reviews these final corrections. Rounds 1–3 review the original seed. The manual-status availability correction
+and six mechanically ported variants are staged for the aggregate round 4 review.
+
+## Manual PR status availability correction
+
+- The trusted evaluator runs while dependency AUTO activation is disabled.
+- Fresh GitHub reads confirm the non-Dependabot author, open state, current
+  default branch, head SHA and base SHA before publishing general policy success.
+- Regression tests cover manual success without AUTO status, stale heads,
+  unsupported targets/states, and repository, pull and status API errors.
+- Manual policy success states that the manual merge process applies; it does
+  not approve or merge the PR.
+
+- Bot API/publication error paths revoke AUTO, Dependabot readiness and general bot status.
+
+## Final focused static validation
+
+Actionlint 1.7.12 passes for all changed workflows.
+
+Changed policy scripts pass Node syntax and repository-locked ESLint. Changed
+JS, YAML, Markdown and JSON pass Prettier 3.9.10 after formatting-only fixes.
+Focused policy suites pass 63 tests, including S1 manual reporting and S2 shared
+SHA isolation. No app build or production service was needed for this pass.
+
+## Round 4 availability and contract corrections
+
+The actual runner reproduced 1,000 general-context writes across 500 unchanged
+shared-head bot/manual scans before the fix. With active bot ownership, the same
+500 scans make one general-context write; valid current-head pnupu approval then
+recovers readiness without exhausting the status cap. Tests also cover closed
+bot associations, wrong heads/targets, lookup errors, and manual error deferral.
+All workflow filenames are scanned for the old broad approval path; the six
+retained legacy approval workflows are removed. Adoption uses only the trusted
+activation file after host prerequisites and live-veto checks.

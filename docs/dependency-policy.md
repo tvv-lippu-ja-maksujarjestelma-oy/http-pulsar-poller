@@ -6,10 +6,13 @@ merge executor. No bot approval is created.
 
 ## Activation is blocked
 
-`activation.json` is deliberately disabled and the workflow is opt-in. Missing or
-failed policy statuses block the Mergify queues until a
-separately authorized adoption verifies settings and enables it in trusted base
-code. This PR does not change repository settings or authorize its own merge.
+`activation.json` is deliberately disabled. The trusted evaluator still runs for
+all pull requests: a freshly verified non-Dependabot PR to the current default
+branch receives the general `Dependency policy` success for the manual merge
+path, with no AUTO status or merge authorization. Dependabot PRs remain blocked
+until a separately authorized adoption verifies settings and enables AUTO in
+trusted base code. This change does not alter repository settings or authorize
+its own merge.
 The 2026-11-04 inspection found strict required `CodeQL` and
 `Build, check, test, push`, zero required reviews, stale dismissal disabled,
 admin enforcement enabled, and Mergify review bypass. Those checks are retained.
@@ -25,7 +28,7 @@ The trusted evaluator uses the GitHub Actions token with statuses write.
 Both Mergify policy conditions are qualified to `@github-actions/`; a third-party
 integration or personal token cannot satisfy them. All jobs that execute PR
 code must explicitly lack status/check writes, and their checkout credentials
-must not confer writes. This PR restricts the build workflow to contents read
+must not confer writes. The build workflow uses `contents: read`
 and disables persisted checkout credentials. CodeQL and Trivy already declare
 permissions without status/check writes; their security-event uploads remain.
 The review signal has no permissions. The evaluator alone can publish policy
@@ -36,10 +39,12 @@ and stale or bot approvals. Repository writers intentionally changing trusted
 workflows or granting new credentials are trusted administrative actors; that
 requires an additional organization-level security design if later in scope.
 No dedicated app, service, environment or new secret is needed for this boundary.
-Set repository variable `DEPENDENCY_POLICY_ENABLED=true` and enable the trusted
-activation file only after separately authorized required-status adoption and
-verification of all untrusted execution token permissions. This task changes no
-remote settings, variables or protections.
+The evaluator always runs; there is no repository-variable activation gate.
+After separately authorized required-status adoption, verification of untrusted
+execution token permissions, and live hold/review-revocation checks, change only
+`activation.json.enabled` to `true` in a separately reviewed trusted-base commit.
+Keep every existing protection and required check. This task leaves activation
+false and changes no remote settings, variables or protections.
 
 Native GitHub auto-merge is **not supported for activation by this seed alone**.
 A required asynchronous status cannot atomically veto a hold or withdrawn review
@@ -93,9 +98,16 @@ including manual queue commands: live holds (`help wanted`, `help-wanted`,
 `hold`, case insensitive), draft, conflict, open state, current policy status,
 Build and CodeQL, and no outstanding changes request. HUMAN also needs Mergify's
 live `approved-reviews-by=pnupu`; AUTO requires its separate diff-classification
-status. This prevents cached approval success from surviving dismissal. Both
-statuses are head-bound and app-qualified. There is no label-based approval path or generic bot
-approval. GitHub's required checks remain additional constraints.
+status. This prevents cached approval success from surviving dismissal. The
+`Dependency policy Dependabot` status is mandatory on every bot queue path and
+is published only by Dependabot evaluation. A general manual status from a
+same-SHA PR cannot change bot readiness. A fresh associated-PR lookup reserves
+the general context for an active Dependabot PR targeting the current default
+branch at that head. Manual signals defer all writes, including failures, while
+that bot PR is active. Closed historical bot associations do not reserve a head.
+Unchanged scans deduplicate statuses, preserving the per-SHA/context write cap
+and allowing recovery after current-head approval. All three statuses are app-qualified.
+There is no label-based approval path or generic bot approval. GitHub's required checks remain additional constraints.
 
 GitHub webhooks/checks are asynchronous. Mergify's live conditions supply the
 merge-time mutable-state veto; the workflow supplies diff classification and

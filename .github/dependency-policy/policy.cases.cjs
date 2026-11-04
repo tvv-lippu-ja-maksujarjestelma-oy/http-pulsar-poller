@@ -3,6 +3,13 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
+const mergifyPath = fs.existsSync(".mergify.yml")
+  ? ".mergify.yml"
+  : ".github/mergify.yml";
+assert.equal(
+  fs.existsSync(".mergify.yml") && fs.existsSync(".github/mergify.yml"),
+  false,
+);
 const { classify, bump, currentApproval, eligible } = require("./policy.cjs");
 
 function fixture(name = "pino", old = "1.0.0", next = "1.1.0", dev = false) {
@@ -225,13 +232,14 @@ for (const [name, mutate] of [
     }
   });
 test("manual queue and merge wiring use identical conditions", () => {
-  const y = fs.readFileSync(".github/mergify.yml", "utf8");
+  const y = fs.readFileSync(mergifyPath, "utf8");
   assert.match(y, /queue_conditions: &eligibility/);
   assert.match(y, /merge_conditions: \*eligibility/);
   assert.match(y, /conditions: \*eligibility/);
   for (const required of [
     "approved-reviews-by=pnupu",
     "check-success=@github-actions/Dependency policy AUTO",
+    "check-success=@github-actions/Dependency policy Dependabot",
     "check-success=@github-actions/Dependency policy",
     "help wanted|help-wanted|hold",
     "check-success=CodeQL",
@@ -248,6 +256,7 @@ test("privileged workflow uses trusted base only; no approval/native bypass", ()
   );
   assert.match(y, /pull_request_target:/);
   assert.match(y, /ref: \$\{\{ github.event.repository.default_branch \}\}/);
+  assert.doesNotMatch(y, /DEPENDENCY_POLICY_ENABLED/);
   assert.match(y, /persist-credentials: false/);
   assert.doesNotMatch(
     y,
@@ -260,7 +269,7 @@ test("privileged workflow uses trusted base only; no approval/native bypass", ()
   );
 });
 
-test("real repository v2 lock and grouped metadata qualify", () => {
+test("real repository lock and grouped metadata qualify", () => {
   const { repositoryFixture } = require("./fixtures.cjs");
   const f = repositoryFixture();
   assert.equal(classify(f).lane, "AUTO");
@@ -293,11 +302,15 @@ test("privileged publisher is isolated from PR execution credentials", () => {
   const ci = fs.readFileSync(".github/workflows/ci-cd.yml", "utf8");
   assert.match(ci, /permissions:\n {2}contents: read/);
   assert.match(ci, /persist-credentials: false/);
-  const mergify = fs.readFileSync(".github/mergify.yml", "utf8");
+  const mergify = fs.readFileSync(mergifyPath, "utf8");
   assert.doesNotMatch(mergify, /check-success=Dependency policy/);
   assert.match(
     mergify,
     /check-success=@github-actions\/Dependency policy AUTO/,
+  );
+  assert.match(
+    mergify,
+    /check-success=@github-actions\/Dependency policy Dependabot/,
   );
 });
 test("repository fixture remains valid after npm v3 migration", () => {
@@ -307,4 +320,19 @@ test("repository fixture remains valid after npm v3 migration", () => {
   delete lock.dependencies;
   assert.equal(classify(repositoryFixture(lock)).lane, "AUTO");
 });
+test("every workflow filename rejects retained broad bot approval and fictional activation gates", () => {
+  for (const filename of fs
+    .readdirSync(".github/workflows")
+    .filter((name) => /\.ya?ml$/.test(name))) {
+    const workflow = fs.readFileSync(`.github/workflows/${filename}`, "utf8");
+    assert.doesNotMatch(
+      workflow,
+      /gh\s+pr\s+review\b[\s\S]*?--approve/,
+      filename,
+    );
+  }
+  const contract = fs.readFileSync("docs/dependency-policy.md", "utf8");
+  assert.doesNotMatch(contract, /DEPENDENCY_POLICY_ENABLED/);
+});
+
 /* eslint-enable @typescript-eslint/no-require-imports */

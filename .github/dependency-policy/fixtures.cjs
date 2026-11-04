@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 const fs = require("node:fs");
-// Exercise this repository's real npm v2 tree, including its legacy duplicate.
+// Exercise this repository's actual npm lockfile shape, including legacy entries when present.
 // Change only prettier, with the exact grouped trailer grammar used by Dependabot.
 function repositoryFixture(
   lock = JSON.parse(fs.readFileSync("package-lock.json", "utf8")),
